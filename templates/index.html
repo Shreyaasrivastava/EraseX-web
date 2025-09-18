@@ -1,0 +1,94 @@
+<!-- templates/index.html -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>EraseX Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background:#f4f7fb; }
+    .card { border-radius:12px; box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+    .drive-cta { min-width:180px; }
+    #output { white-space:pre-wrap; background:#fff; padding:16px; border-radius:8px; margin-top:18px; }
+  </style>
+</head>
+<body class="container py-5">
+  <h1 class="text-center mb-4">🧹 EraseX Secure Wipe Dashboard</h1>
+
+  <div class="text-center mb-4">
+    <button id="btn-list" class="btn btn-primary btn-lg">📂 List Drives</button>
+  </div>
+
+  <div id="driveList" class="row g-3 justify-content-center"></div>
+
+  <div id="output" class="mt-4">Output will appear here...</div>
+
+  <script>
+    // Use relative URLs (no hard-coded host) to avoid CORS and mismatch issues
+    async function listDrives() {
+      document.getElementById('output').innerText = "Detecting drives...";
+      try {
+        const res = await fetch('/list-drives');
+        if (!res.ok) throw new Error('Network response not ok');
+        const data = await res.json();
+        const container = document.getElementById('driveList');
+        container.innerHTML = '';
+        if (!data.drives || data.drives.length === 0) {
+          container.innerHTML = '<div class="col-12 text-center">No drives detected</div>';
+        } else {
+          data.drives.forEach(d => {
+            const col = document.createElement('div');
+            col.className = 'col-md-4';
+            col.innerHTML = `
+              <div class="card p-3 text-center">
+                <h5 class="mb-3">${d}</h5>
+                <button class="btn btn-success drive-cta" onclick="wipeDrive('${encodeURIComponent(d)}')">🧹 Wipe</button>
+              </div>`;
+            container.appendChild(col);
+          });
+          document.getElementById('output').innerText = 'Drives listed. Click "Wipe" to simulate.';
+        }
+      } catch (err) {
+        document.getElementById('output').innerText = 'Error listing drives: ' + err;
+      }
+    }
+
+    async function wipeDrive(encodedDrive) {
+      const drive = decodeURIComponent(encodedDrive);
+      if (!confirm(`Simulate wipe of ${drive}?\nThis will NOT modify your real disk.`)) return;
+      document.getElementById('output').innerText = `Simulating wipe of ${drive}...`;
+      try {
+        const res = await fetch('/wipe-drive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ drive })
+        });
+        const data = await res.json();
+        if (data.error) {
+          document.getElementById('output').innerText = 'Error: ' + data.error;
+          return;
+        }
+        // Show results and a download button for the generated PDF
+        document.getElementById('output').innerHTML = `
+          ✅ Simulated wipe complete for <b>${data.drive}</b><br>
+          Pre-hash: ${data.pre_hash}<br>
+          Post-hash: ${data.post_hash}<br>
+          Certificate ID: ${data.certificate_id} <br>
+          <a class="btn btn-outline-primary mt-2" href="${data.download_url}" target="_blank">📜 Download Certificate (PDF)</a>
+        `;
+      } catch (err) {
+        document.getElementById('output').innerText = 'Wipe error: ' + err;
+      }
+    }
+
+    document.getElementById('btn-list').addEventListener('click', listDrives);
+    // optional: auto-list on load
+    // window.addEventListener('load', listDrives);
+  </script>
+</body>
+</html>
+
+
+
+
