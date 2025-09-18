@@ -25,7 +25,7 @@ wipe_history = {}
 
 def list_system_drives():
     """Return demo drives when running on Render."""
-    if os.environ.get("RENDER"):  # detect Render environment
+    if os.environ.get("RENDER_SERVICE_ID"):  # detect Render environment correctly
         return ["C:\\", "D:\\", "E:\\"]
     if psutil:
         try:
@@ -34,6 +34,7 @@ def list_system_drives():
         except Exception:
             pass
     return ["C:\\", "D:\\"]
+
 
 
 def _make_qr_image(url, out_path):
