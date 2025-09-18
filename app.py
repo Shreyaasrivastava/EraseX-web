@@ -24,15 +24,17 @@ os.makedirs(CERT_DIR, exist_ok=True)
 wipe_history = {}
 
 def list_system_drives():
-    """Return list of detected drives or demo list if psutil unavailable."""
+    """Return demo drives when running on Render."""
+    if os.environ.get("RENDER"):  # detect Render environment
+        return ["C:\\", "D:\\", "E:\\"]
     if psutil:
         try:
             parts = psutil.disk_partitions(all=False)
             return [p.device for p in parts]
         except Exception:
             pass
-    # fallback demo drives (safe)
     return ["C:\\", "D:\\"]
+
 
 def _make_qr_image(url, out_path):
     qr = qrcode.QRCode(box_size=6, border=2)
