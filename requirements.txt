@@ -1,0 +1,8 @@
+flask
+psutil
+qrcode
+reportlab
+gunicorn
+pillow
+
+# rebuild-1
